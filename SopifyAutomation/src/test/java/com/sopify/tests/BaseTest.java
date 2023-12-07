@@ -1,0 +1,175 @@
+package com.sopify.tests;
+
+import java.util.concurrent.TimeUnit;
+import java.util.Properties;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.time.Duration;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.interactions.Actions;
+import org.testng.ITestContext;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Listeners;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.Select;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import com.sopify.context.WebDriverContext;
+import com.sopify.listeners.LogListener;
+import com.sopify.listeners.ReportListener;
+import com.sopify.properies.Properies_Mysopify;
+import com.sopify.utill.LoggerUtil;
+import com.sopify.utill.MailUtil;
+import com.sopify.utill.TestProperties;
+
+import io.github.bonigarcia.wdm.WebDriverManager;
+
+/**
+ * Every test class should extend this calss.
+ *
+ * @author 
+ */
+@Listeners({ ReportListener.class, LogListener.class })
+public class BaseTest {
+	
+	Properies_Mysopify mysopify = new Properies_Mysopify();
+	
+	/** The driver. */
+	protected WebDriver driver;
+
+	/**
+	 * Global setup.
+	 */
+	@BeforeSuite(alwaysRun = true)
+	public void globalSetup() {
+		LoggerUtil.log("************************** Test Execution Started ************************************");
+		TestProperties.loadAllPropertie();
+	}
+
+	/**
+	 * Wrap all up.
+	 *
+	 * @param context the context
+	 */
+	@AfterSuite(alwaysRun = true)
+	public void wrapAllUp(ITestContext context) {
+		int total = context.getAllTestMethods().length;
+		int passed = context.getPassedTests().size();
+		int failed = context.getFailedTests().size();
+		int skipped = context.getSkippedTests().size();
+		LoggerUtil.log("Total number of testcases : " + total);
+		LoggerUtil.log("Number of testcases Passed : " + passed);
+		LoggerUtil.log("Number of testcases Failed : " + failed);
+		LoggerUtil.log("Number of testcases Skipped  : " + skipped);
+		boolean mailSent = MailUtil.sendMail(total, passed, failed, skipped);
+		LoggerUtil.log("Mail sent : " + mailSent);
+		LoggerUtil.log("************************** Test Execution Finished ************************************");
+	}
+
+	/**
+	 * Setup.
+	 */
+	@BeforeClass
+	protected void setup() {
+//		System.setProperty("webdriver.chrome.driver", Constants.CHROME_DRIVER_PATH);
+		WebDriverManager.chromedriver().setup();
+		ChromeOptions ops = new ChromeOptions();
+		ops.addArguments("disable-infobars");
+		driver = new ChromeDriver(ops);
+		driver.manage().window().maximize();
+		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		WebDriverContext.setDriver(driver);
+	}
+
+	/**
+	 * Wrap up.
+	 */
+	@AfterClass
+	public void wrapUp() {
+		if (driver != null) {
+			driver.close();
+			driver.quit();
+		}
+	}
+	
+	public void getClickbyXpathData(String XpathData)
+	{
+		driver.findElement(By.xpath(XpathData)).click();
+	}
+	
+	public void MouseMoveClick(String Xpath)
+	{
+		WebElement mainMenu = driver.findElement(By.xpath(Xpath));
+
+		//Instantiating Actions class
+		Actions actions = new Actions(driver);
+
+		//Hovering on main menu
+		actions.moveToElement(mainMenu);
+
+	//build()- used to compile all the actions into a single step 
+		actions.click().build().perform();
+	}
+	public void Lunch_Url()
+	{
+        String MysopifyUrl = mysopify.PropertiesHandler();
+        driver.get(MysopifyUrl);
+	}
+	public void sendkeysdata_Xpath(String Xpath_data , String sendKeys_data) {
+		driver.findElement(By.xpath(Xpath_data)).clear();
+		   // Find the input field by its xpath
+        WebElement TextField = driver.findElement(By.xpath(Xpath_data));
+
+        // Send data (text) to the input field
+        TextField.sendKeys(sendKeys_data);
+	}
+	public void sendkeys_id(String ID , String sendKeys_data) {
+		 driver.findElement(By.id(ID)).clear();
+		   // Find the input field by its ID
+        WebElement TextField = driver.findElement(By.id(ID));
+
+        // Send data (text) to the input field
+        TextField.sendKeys(sendKeys_data);
+	}
+	public void Click_ByID(String ClickButton) {
+		 WebElement submitButton = driver.findElement(By.id(ClickButton));
+
+	        // Click the element
+	        submitButton.click();
+	}
+	public void Click_ByXpath(String ClickButton) {
+		 WebElement submitButton = driver.findElement(By.xpath(ClickButton));
+
+	        // Click the element
+	        submitButton.click();
+	}
+	public void Wait_ByImplicitly(int time) {
+        driver.manage().timeouts().implicitlyWait(time, TimeUnit.SECONDS);
+
+	}
+	public void WaitExplicit_byID(String elementId , int waittime) {
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(waittime));
+		wait.until(ExpectedConditions.visibilityOfElementLocated(By.id(elementId)));
+
+	}
+	public void enterdataxpath(String TextField) {
+		driver.findElement(By.xpath(TextField)).sendKeys(Keys.ENTER);
+	}
+	public void selectindex(String dropdownXpath , int indexvalue) {
+		WebElement dropdown = driver.findElement(By.xpath(dropdownXpath));
+
+        // Create a Select object by passing the dropdown WebElement
+        Select select = new Select(dropdown);
+
+        select.selectByIndex(indexvalue);
+	}
+}
